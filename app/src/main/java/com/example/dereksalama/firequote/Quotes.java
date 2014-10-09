@@ -3,24 +3,35 @@ package com.example.dereksalama.firequote;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 
 import com.firebase.client.AuthData;
 import com.firebase.client.Firebase;
 
 
-public class Quotes extends Activity {
+public class Quotes extends PlusBaseActivity {
 
     Firebase firebase;
 
-    public static final String FIRE_URL = "https://firequote.firebasio.com/";
+    private static final String TAG = "Quotes";
+    public static final String FIRE_URL = "https://firequote.firebaseio.com";
+
+    @Override
+    protected void onPlusClientSignOut() {
+        super.onPlusClientSignOut();
+        firebase.unauth();
+        signOut();
+        startLoginActivity();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_quotes);
-        Firebase.setAndroidContext(this);
+        Firebase.setAndroidContext(getApplicationContext());
 
         firebase = new Firebase(FIRE_URL);
         firebase.addAuthStateListener(new Firebase.AuthStateListener() {
@@ -36,9 +47,18 @@ public class Quotes extends Activity {
 
     @Override
     protected void onResume() {
+        super.onResume();
         AuthData authData = firebase.getAuth();
         if (authData == null) {
+            Log.v(TAG, "No user, starting login");
             startLoginActivity();
+        } else {
+            TextView welcomeTextView = (TextView) findViewById(R.id.welcome_text);
+            if (authData.getProviderData().containsKey("displayName")) {
+                welcomeTextView.setText((String) authData.getProviderData().get("displayName"));
+            } else if (authData.getProviderData().containsKey("email")) {
+                welcomeTextView.setText((String) authData.getProviderData().get("email"));
+            }
         }
     }
 

@@ -4,10 +4,10 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 
+import android.app.Activity;
 import android.app.LoaderManager.LoaderCallbacks;
 import android.content.ContentResolver;
 import android.content.CursorLoader;
-import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
@@ -28,23 +28,14 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.firebase.client.AuthData;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
-import com.google.android.gms.auth.GoogleAuthException;
-import com.google.android.gms.auth.GoogleAuthUtil;
-import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.SignInButton;
-import com.google.android.gms.plus.Plus;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -55,16 +46,16 @@ import java.util.Map;
  * https://developers.google.com/+/mobile/android/getting-started#step_1_enable_the_google_api
  * and follow the steps in "Step 1" to create an OAuth 2.0 client for your package.
  */
-public class LoginActivity extends PlusBaseActivity implements LoaderCallbacks<Cursor>{
+public class NewAccountActivity extends Activity implements LoaderCallbacks<Cursor>{
 
-    private static final String TAG = "LoginActivity";
+    private static final String TAG = "NewAccountActivity";
 
     // UI references.
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
     private View mProgressView;
     private View mEmailLoginFormView;
-    private SignInButton mPlusSignInButton;
+    private View mSignOutButtons;
     private View mLoginFormView;
 
     Firebase firebase;
@@ -72,27 +63,7 @@ public class LoginActivity extends PlusBaseActivity implements LoaderCallbacks<C
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
-
-
-
-        // Find the Google+ sign in button.
-        mPlusSignInButton = (SignInButton) findViewById(R.id.plus_sign_in_button);
-        if (supportsGooglePlayServices()) {
-            // Set a listener to connect the user when the G+ button is clicked.
-            mPlusSignInButton.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    signIn();
-                }
-            });
-        } else {
-            // Don't offer G+ sign in if the app's version is too low to support Google Play
-            // Services.
-            mPlusSignInButton.setVisibility(View.GONE);
-            return;
-        }
-
+        setContentView(R.layout.activity_new_account);
 
         // Set up the login form.
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
@@ -121,15 +92,7 @@ public class LoginActivity extends PlusBaseActivity implements LoaderCallbacks<C
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
         mEmailLoginFormView = findViewById(R.id.email_login_form);
-
-        Button createAccountButton = (Button) findViewById(R.id.new_account_button);
-        createAccountButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent i = new Intent(LoginActivity.this, NewAccountActivity.class);
-                startActivity(i);
-            }
-        });
+        mSignOutButtons = findViewById(R.id.plus_sign_out_buttons);
 
         firebase = new Firebase(Quotes.FIRE_URL);
     }
@@ -184,39 +147,19 @@ public class LoginActivity extends PlusBaseActivity implements LoaderCallbacks<C
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            firebase.authWithPassword(email, password, new Firebase.AuthResultHandler() {
-
+            firebase.createUser(email, password, new Firebase.ResultHandler() {
                 @Override
-                public void onAuthenticated(AuthData authData) {
-                    Log.v(TAG, "Password auth complete for " + authData.getUid());
-                    saveUser(authData);
+                public void onSuccess() {
+                    Log.v(TAG, "Sign up success!");
                     finish();
                 }
 
                 @Override
-                public void onAuthenticationError(FirebaseError firebaseError) {
-                    mPasswordView.setError(getString(R.string.error_incorrect_password));
-                    mPasswordView.requestFocus();
-                    showProgress(false);
+                public void onError(FirebaseError firebaseError) {
+                    Log.e(TAG, firebaseError.getMessage());
                 }
             });
         }
-    }
-
-    private void saveUser(AuthData authData) {
-        Map<String, String> map = new HashMap<String, String>();
-        map.put("provider", authData.getProvider());
-        if(authData.getProviderData().containsKey("id")) {
-            map.put("provider_id", authData.getProviderData().get("id").toString());
-        }
-        if(authData.getProviderData().containsKey("displayName")) {
-            map.put("displayName", authData.getProviderData().get("displayName").toString());
-        }
-        if(authData.getProviderData().containsKey("email")
-                && authData.getProviderData().get("email") != null) {
-            map.put("email", authData.getProviderData().get("email").toString());
-        }
-        firebase.child("users").child(authData.getUid()).setValue(map);
     }
     private boolean isEmailValid(String email) {
         //TODO: Replace this with your own logic
@@ -262,29 +205,6 @@ public class LoginActivity extends PlusBaseActivity implements LoaderCallbacks<C
             mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
             mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
         }
-    }
-
-    @Override
-    protected void onPlusClientSignIn() {
-
-        getGoogleOAuthTokenAndLogin();
-    }
-
-    @Override
-    protected void onPlusClientBlockingUI(boolean show) {
-        showProgress(show);
-    }
-
-
-    /**
-     * Check if the device supports Google Play Services.  It's best
-     * practice to check first rather than handling this as an error case.
-     *
-     * @return whether the device supports Google Play Services
-     */
-    private boolean supportsGooglePlayServices() {
-        return GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) ==
-                ConnectionResult.SUCCESS;
     }
 
     @Override
@@ -335,61 +255,10 @@ public class LoginActivity extends PlusBaseActivity implements LoaderCallbacks<C
     private void addEmailsToAutoComplete(List<String> emailAddressCollection) {
         //Create adapter to tell the AutoCompleteTextView what to show in its dropdown list.
         ArrayAdapter<String> adapter =
-                new ArrayAdapter<String>(LoginActivity.this,
+                new ArrayAdapter<String>(NewAccountActivity.this,
                         android.R.layout.simple_dropdown_item_1line, emailAddressCollection);
 
         mEmailView.setAdapter(adapter);
-    }
-
-    private void getGoogleOAuthTokenAndLogin() {
-        /* Get OAuth token in Background */
-        AsyncTask<Void, Void, String> task = new AsyncTask<Void, Void, String>() {
-            String errorMessage = null;
-            @Override
-            protected String doInBackground(Void... params) {
-                String token = null;
-
-                try {
-                    String scope = String.format("oauth2:%s", Scopes.PLUS_LOGIN);
-                    token = GoogleAuthUtil.getToken(LoginActivity.this, Plus.AccountApi.getAccountName(getApiClient()), scope);
-                } catch (IOException transientEx) {
-                    /* Network or server error */
-                    Log.e(TAG, "Error authenticating with Google: " + transientEx);
-                    errorMessage = "Network error: " + transientEx.getMessage();
-                } catch (UserRecoverableAuthException e) {
-                    Log.w(TAG, "Recoverable Google OAuth error: " + e.toString());
-                    /* We probably need to ask for permissions, so start the intent if there is none pending */
-                    signIn();
-                } catch (GoogleAuthException authEx) {
-                    /* The call is not ever expected to succeed assuming you have already verified that
-                     * Google Play services is installed. */
-                    Log.e(TAG, "Error authenticating with Google: " + authEx.getMessage(), authEx);
-                    errorMessage = "Error authenticating with Google: " + authEx.getMessage();
-                }
-
-                return token;
-            }
-
-            @Override
-            protected void onPostExecute(String token) {
-                firebase.authWithOAuthToken("google", token, new Firebase.AuthResultHandler() {
-                    @Override
-                    public void onAuthenticated(AuthData authData) {
-                        if (authData != null) {
-                            Log.v(TAG, "google sign in success");
-                            saveUser(authData);
-                        }
-                        finish();
-                    }
-
-                    @Override
-                    public void onAuthenticationError(FirebaseError firebaseError) {
-                        Log.e(TAG, firebaseError.getMessage());
-                    }
-                });
-            }
-        };
-        task.execute();
     }
 }
 

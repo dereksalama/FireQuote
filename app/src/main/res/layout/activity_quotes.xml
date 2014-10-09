@@ -4,4 +4,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".Quotes"
-    tools:ignore="MergeRootFrame" />
+    tools:ignore="MergeRootFrame" >
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_gravity="center">
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            style="?android:textAppearanceSmall"
+            android:text="Hello!"
+            android:id="@+id/welcome_text"
+            android:layout_gravity="center_horizontal" />
+    </LinearLayout>
+</FrameLayout>

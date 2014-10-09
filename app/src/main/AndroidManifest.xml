@@ -32,6 +32,12 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+
+        <activity
+            android:name=".NewAccountActivity"
+            android:label="@string/title_activity_new_account"
+            android:windowSoftInputMode="adjustResize|stateHidden" >
+        </activity>
     </application>
 
     <!--
