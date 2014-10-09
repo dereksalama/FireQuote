@@ -83,6 +83,7 @@ public class LoginActivity extends PlusBaseActivity implements LoaderCallbacks<C
             mPlusSignInButton.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    Plus.AccountApi.clearDefaultAccount(getApiClient());
                     signIn();
                 }
             });
@@ -266,7 +267,6 @@ public class LoginActivity extends PlusBaseActivity implements LoaderCallbacks<C
 
     @Override
     protected void onPlusClientSignIn() {
-
         getGoogleOAuthTokenAndLogin();
     }
 

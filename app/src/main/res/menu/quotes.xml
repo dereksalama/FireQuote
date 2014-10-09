@@ -6,8 +6,7 @@
         android:orderInCategory="100"
         android:showAsAction="never" />
     <item android:id="@+id/action_logout"
-        android:title="logoout" />
+        android:title="logout" />
     <item android:id="@+id/action_new_quote"
-        android:title="new quote
-        " />
+        android:title="new quote" />
 </menu>

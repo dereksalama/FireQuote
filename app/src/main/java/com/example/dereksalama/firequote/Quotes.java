@@ -84,6 +84,11 @@ public class Quotes extends PlusBaseActivity {
         if (id == R.id.action_settings) {
             return true;
         } else if (id == R.id.action_logout) {
+            AuthData authData = firebase.getAuth();
+            if (authData.getProvider().equals("google")) {
+                // inherited google sign out method
+                signOut();
+            }
             firebase.unauth();
         }
         return super.onOptionsItemSelected(item);

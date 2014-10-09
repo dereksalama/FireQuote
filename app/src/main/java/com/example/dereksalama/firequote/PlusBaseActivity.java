@@ -240,7 +240,7 @@ public abstract class PlusBaseActivity extends Activity
     public void onConnected(Bundle connectionHint) {
         updateConnectButtonState();
         setProgressBarVisible(false);
-        onPlusClientSignIn();
+        //onPlusClientSignIn();
     }
 
     @Override
